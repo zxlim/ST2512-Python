@@ -1,7 +1,5 @@
-## Task 2 - Password Recovery
 ## ST2512 Programming in Security
-## pseUser1: 632; pseUser2: 9125; pseUser3: 54682;
-## pseUser4: 326918; pseUser5: 501297
+## Task 2 - Password Recovery
 
 #!/usr/bin/python
 
@@ -10,13 +8,8 @@ from crypt import crypt
 from datetime import datetime
 
 def currentDateTime():
-    dateTimeList = []
-    dateTimeStr = ""
     nowDateTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    dateTimeList.append(nowDateTime)
-    for dateTime in dateTimeList:
-        dateTimeStr = dateTimeStr + str(dateTime)
-    return dateTimeStr
+    return unicode(nowDateTime)
 
 def getSystemInfo():
     os = " ".join(platform.linux_distribution()) + ", "
