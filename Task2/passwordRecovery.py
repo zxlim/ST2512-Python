@@ -7,21 +7,18 @@ from crypt import crypt
 from datetime import datetime
 from itertools import permutations
 
-def currentDateTime():
-    nowDateTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return unicode(nowDateTime)
+combinationList = []
 
-def getCombinations():
-    combinationList = []
+def currentDateTime():
+    return unicode(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+def generateCombinations():
     numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
     for pwLength in range(1,7,1):
         for n in permutations(numbers, pwLength):
-            tries = "".join(n[0:])
-            combinationList.append(tries)
-    return combinationList    
+            combinationList.append("".join(n[0:]))
 
 def passwordRecovery():
-    combinationList = getCombinations()
     with open("shadow.txt", "r") as shadowFile:
         for line in shadowFile:
             line = line.replace("\n", "").split(":")
@@ -31,18 +28,18 @@ def passwordRecovery():
             userSalt = encryption.split("$")[2]
             salt = "${}${}$".format(hashID, userSalt)
             print("Attempting recovery on " + username + "'s password...")
-            decrypt(encryption, salt, combinationList)
+            decrypt(encryption, salt)
         shadowFile.close()
 
-def decrypt(encryption, salt, combinationList):
+def decrypt(encryption, salt):
     for tries in combinationList:
-        attempt = crypt(tries, salt)
-        if attempt == encryption:
+        if crypt(tries, salt) == encryption:
             print("Password found:\t\t" + tries + "\n")
             return
 
 def main():
     print("\nProgram start time:\t" + currentDateTime() + "\n")
+    generateCombinations()
     passwordRecovery()
     print("Program complete time:\t" + currentDateTime() + "\n")
 

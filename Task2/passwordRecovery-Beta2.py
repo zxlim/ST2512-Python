@@ -1,6 +1,6 @@
 ## ST2512 Programming in Security
 ## Task 2 - Password Recovery
-
+## BETA: Use this python file to test new stuff
 #!/usr/bin/python
 
 from crypt import crypt
@@ -12,7 +12,7 @@ combinationList = []
 def currentDateTime():
     return unicode(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-def getCombinations():
+def generateCombinations():
     numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
     for pwLength in range(1,7,1):
         for n in permutations(numbers, pwLength):
@@ -39,7 +39,7 @@ def decrypt(encryption, salt):
 
 def main():
     print("\nProgram start time:\t" + currentDateTime() + "\n")
-    getCombinations()
+    generateCombinations()
     passwordRecovery()
     print("Program complete time:\t" + currentDateTime() + "\n")
 
