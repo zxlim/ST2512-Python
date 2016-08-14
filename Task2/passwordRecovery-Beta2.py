@@ -12,6 +12,12 @@ combinationList = []
 def currentDateTime():
     return unicode(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
+def generateCombinations():
+    numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    for pwLength in range(1,7,1):
+        for n in permutations(numbers, pwLength):
+            combinationList.append("".join(n[0:]))
+
 def passwordRecovery():
     with open("shadow.txt", "r") as shadowFile:
         for line in shadowFile:
@@ -22,16 +28,13 @@ def passwordRecovery():
         shadowFile.close()
 
 def decrypt(encryption, salt):
-    for tries in combinationList:
-        if crypt(tries, salt) == encryption:
-            return tries
+    for password in combinationList:
+        if crypt(password, salt) == encryption:
+            return password
 
 def main():
     print("\nProgram start time:\t" + currentDateTime() + "\n")
-    numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    for pwLength in range(1,7,1):
-        for n in permutations(numbers, pwLength):
-            combinationList.append("".join(n[0:]))
+    generateCombinations()
     passwordRecovery()
     print("Program complete time:\t" + currentDateTime() + "\n")
 
