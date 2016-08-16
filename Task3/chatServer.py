@@ -2,13 +2,32 @@
 import socket
 import threading
 import Queue
+import time
 
 def listener(c, addr, q):
+    name = ""
+    chat = True
     with lock:
         clients.append(c)
     c.settimeout(3.0)
     print("Clients connected: " + str(len(clients)))
-    while True:
+    try:
+        buffer = c.recv(255)
+        name = getUser(buffer)
+        if name in users:
+            c.sendall("Username already taken! Please try another.")
+            q.put("q")
+            chat = False
+            time.sleep(3)
+        else:
+            print(name + " joined the chat.")
+            with lock:
+                users.append(name)
+    except Exception as ex:
+        if not check or (str(ex) != "timed out"):
+            q.put("q")
+            chat = False
+    while chat:
         try:
             buffer = c.recv(255)
             if len(buffer) > 0:
@@ -27,11 +46,16 @@ def listener(c, addr, q):
     with lock:
         clients.remove(c)
         for con in clients:
-            con.sendall("Someone disconnected from the chat\n")
-            con.sendall(str(len(clients)) + " person left in the chat\n")
+            con.sendall(name + " disconnected from the chat.\n")
+            con.sendall(str(len(clients)) + " person(s) left in the chat.\n")
     print("Connection from " + addr + " closed.")
     print("Clients connected: " + str(len(clients)))
     return
+
+def getUser(buf):
+    buf = buf.split("]")[0]
+    name = buf.replace("[", "")
+    return name
 
 def getSocket():
     return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -45,6 +69,7 @@ s.settimeout(3.0)
 check = True
 q = Queue.Queue(10)
 clients = []
+users = []
 lock = threading.Lock()
     
 print("Server connection started.\nListening on " + host + ":"\
@@ -68,6 +93,6 @@ while True:
     if not q.empty():
         if len(clients) == 0:
             check = False
-            print(str(check)) #Debug code
+            #print(str(check)) #Debug code
 s.close()
 print("Server connection closed.")
