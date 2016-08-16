@@ -40,7 +40,7 @@ host = "0.0.0.0"
 port = 8089
 s = getSocket()
 s.bind((host, port))
-s.listen(5)
+s.listen(10)
 s.settimeout(3.0)
 check = True
 q = Queue.Queue(10)
