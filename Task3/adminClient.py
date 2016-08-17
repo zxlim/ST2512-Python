@@ -9,24 +9,34 @@ host = ""
 if len(sys.argv) < 3:
     host = "127.0.0.1"
 else:
-    host = sys.argv[1]
+    host = sys.ar/
+    gv[1]
 
 flag = True
 
 while flag:
-    action = raw_input("Enter your action (x to stop, s to show stats, q to quit):\t")
+    msg = raw_input("Enter your action (/h) for help: ")
+    action = msg.split()[0].replace("/","")
     try:
-        if action == "x":
+        if action == "help":
+            print """
+                /kick [NICKNAME] - Kicks and disconnects the user specified"
+                /whisper [NICKNAME] "MESSAGE" - Sends a private message to the user specified
+                /shutdown to shutdown the server
+                /stats to retrieve current users information
+                /quit to disconnect from the server
+                """
+        elif action == "shutdown":
             s = getSocket()
             port = 8888
             s.connect((host, port))
             flag = False
-        elif action == "s":
+        elif action == "stats":
             s = getSocket()
             port = 8887
             s.connect((host, port))
             print(s.recv(255))
-        elif action == "q":
+        elif action == "quit":
             flag = False
         else:
             print("Invalid input!")

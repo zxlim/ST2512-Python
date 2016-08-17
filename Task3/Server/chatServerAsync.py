@@ -11,7 +11,9 @@ def receive(client, size):
 
 def prompt():
     print """
-        Connect to port 8089 for echo service
+        Connect to port 8089 for broadcast
+        Conenct to port 8885 to kick user
+        Connect to port 8886 to whisper
         Connect to port 8887 to show statistic
         Connect to port 8888 to terminate this server
         """
