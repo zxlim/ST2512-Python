@@ -25,23 +25,26 @@ size = 1024
 backlog = 10
 host = "0.0.0.0"
 
-statsPort = 8887
 echoPort = 8089
+statsPort = 8887
+shutdownPort = 8888
 whisperPort = 8885
 kickUserPort = 8886
-shutdownPort = 8888
 
-stats = getSocket()
 echo = getSocket()
+stats = getSocket()
+shutdown = getSocket()
 #whisper = getSocket()
 #kickUser = getSocket()
-shutdown = getSocket()
+
+echo.bind((host, echoPort))
+echo.listen(backlog)
 
 stats.bind((host, statsPort))
 stats.listen(backlog)
 
-echo.bind((host, echoPort))
-echo.listen(backlog)
+shutdown.bind((host, shutdownPort))
+shutdown.listen(backlog)
 
 #whisper.bind((host, whisperPort))
 #whisper.listen(backlog)
@@ -49,14 +52,11 @@ echo.listen(backlog)
 #kickUser.bind((host, kickUserPort))
 #kickUser.listen(backlog)
 
-shutdown.bind((host, shutdownPort))
-shutdown.listen(backlog)
-
 inputList = [echo, stats, shutdown]
-#inputList = [echo, stats, shutdown]
 clientList = []
 prompt()
 flag = True
+
 while flag:
     inputready, outputread, exceptready = select.select(inputList, [], [])
     for s in inputready:
@@ -67,8 +67,13 @@ while flag:
             clientList.append(c)
         elif s == stats:
             statsClient, addr = stats.accept()
-            statsClient.sendall("Clients connected: " + str(len(clientList)))
-            statsClient.close()
+            try:
+                stats = "Clients connected: " + str(len(clientList))
+                statsClient.sendall(stats)
+                statsClient.close()
+            except Exception as ex:
+                statsClient.sendall("Error detected.\n" + str(ex))
+                statsClient.close()
         elif s == shutdown:
             shutdownClient, addr = shutdown.accept()
             print("Shutting down server...")
@@ -85,6 +90,9 @@ while flag:
                 inputList.remove(s)
                 clientList.remove(s)
                 #print("Connection from " + addr + " closed.")
+                for client in clientList:
+                    client.sendall("Someone left the chat.")
+                    client.sendall(str(len(clientList)) + " person(s) left.")
                 print("Clients connected: " + str(len(clientList)))
 for client in clientList:
     client.close()
