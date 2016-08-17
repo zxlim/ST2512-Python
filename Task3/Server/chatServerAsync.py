@@ -30,9 +30,9 @@ stats = getSocket()
 shutdown = getSocket()
 echo.bind((host, port))
 echo.listen(backlog)
-stats.bind((host, port))
+stats.bind((host, statsPort))
 stats.listen(backlog)
-shutdown.bind((host, port))
+shutdown.bind((host, shutdownPort))
 shutdown.listen(backlog)
 inputList = [echo, stats, shutdown]
 clientList = []
@@ -42,16 +42,16 @@ while flag:
     inputready, outputread, exceptready = select.select(inputList, [], [])
     for s in inputready:
         if s == echo:
-            c, addr = server.accept()
+            c, addr = echo.accept()
             print("Remote connection from " + addr[0] + " accepted.")
             inputList.append(c)
             clientList.append(c)
         elif s == stats:
-            statsClient, addr = server.accept()
+            statsClient, addr = stats.accept()
             statsClient.sendall("Clients connected: " + str(len(clientList)))
             statsClient.close()
         elif s == shutdown:
-            shutdownClient, addr = server.accept()
+            shutdownClient, addr = shutdown.accept()
             print("Shutting down server...")
             flag = False
             shutdownClient.close()
