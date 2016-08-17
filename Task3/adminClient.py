@@ -1,57 +1,86 @@
+## ST2512 Programming in Security: Python Task 3 - Chat Server
+## Gerald Peh Wei Xiang (P1445972), DISM/FT/2A/01
+## Lim Zhao Xiang (P1529559), DISM/FT/2A/01
 #!/usr/bin/python
 import socket
-import sys
+from sys import argv
+from time import sleep
+
+def receive(s, size):
+    try:
+        buf = "\n" + s.recv(size)
+    except:
+        buf = ""
+    return buf
 
 def getSocket():
     return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+size = 255
 host = ""
-if len(sys.argv) < 3:
-    host = "127.0.0.1"
-else:
-    host = sys.argv[1]
 
+broadcastPort = 8884
+statsPort = 8887
+shutdownPort = 8888
+whisperPort = 8885
+kickUserPort = 8886
+
+if len(argv) < 2:
+    host = "127.0.0.1"
+    print("Usage: python adminClient.py server_address")
+else:
+    host = argv[1]
 flag = True
+print("\nServer Host: " + host)
 
 while flag:
-    msg = raw_input("Enter your action (/help) for help: ")
+    msg = raw_input("\nEnter your action (/help) for help: ")
     action = msg.split()[0].replace("/","")
     try:
+        s = getSocket()
         if action == "help":
             print """
-                /stats to retrieve current users information
-                /echo [MESSAGE] to broadcast a message
-                /whisper [NICKNAME] [MESSAGE] to send a private message to a user
-                /kick [NICKNAME] to kick and disconnects a user
-                /shutdown to shutdown the server
-                /quit to disconnect from the server
+/stats to retrieve connected clients information
+/broadcast [MESSAGE] to broadcast a message
+/whisper [CLIENT ID] [MESSAGE] to send a private message to a user
+/kick [CLIENT ID] to kick and disconnects a client
+/shutdownNOW to shutdown the server
+/quit to close admin client               
                 """
         elif action == "stats" or action == "s":
-            s = getSocket()
-            port = 8887
-            s.connect((host, port))
-            print(s.recv(255))
-        elif action == "echo" or action == "e":
-            s = getSocket()
-            port = 8089
-        elif action == "whisper" or action == "w":
-            s = getSocket()
-            port = 8885
-        elif action == "kick" or action == "k":
-            s = getSocket()
-            port = 8886
-        elif action == "shutdown":
-            s = getSocket()
-            port = 8888
-            s.connect((host, port))
+            s.connect((host, statsPort))
+            print(receive(s, size))
+            s.close()
+        elif action == "broadcast":
+            adminMsg = msg.replace("broadcast ","")
+            s.connect((host, broadcastPort))
+            s.sendall(adminMsg)
+            s.close()
+        elif action == "whisper":
+            adminMsg = msg.replace("whisper ","")
+            s.connect((host, whisperPort))
+            s.sendall(adminMsg)
+            print(receive(s, size))
+            s.close()
+        elif action == "kick":
+            clientID = msg.replace("kick ","")
+            s.connect((host, kickUserPort))
+            s.sendall(clientID)
+            print(receive(s, size))
+            s.close()
+        elif action == "shutdownNOW":
+            s.connect((host, shutdownPort))
+            s.close()
+            print("Server shutdown initiated.")
             flag = False
         elif action == "quit" or action == "q":
             flag = False
         else:
-            print("Invalid input!\tEnter /help for help!\n")
+            print("Invalid input! Please try again.")
             pass
-    except:
+    except Exception as ex:
         print("Connection to server failed. Try again.")
-        flag = False
-
+        print(str(ex))
+        sleep(1)
 print("Exiting Admin Client...")
+sleep(1)

@@ -1,7 +1,10 @@
+## ST2512 Programming in Security: Python Task 3 - Chat Server
+## Gerald Peh Wei Xiang (P1445972), DISM/FT/2A/01
+## Lim Zhao Xiang (P1529559), DISM/FT/2A/01
+#!/usr/bin/python
 import datetime
 import re
 import time
-#import collections
 import operator
 
 # Q1
