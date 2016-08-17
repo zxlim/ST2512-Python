@@ -1,44 +1,62 @@
 #!/usr/bin/python
 import select
 import socket
-import sys
-import time
+
+def receive(client, size):
+    try:
+        buf = client.recv(size)
+    except:
+        buf = ""
+    return buf
 
 def prompt():
-    print("\nType x to close server\nType s to show statistics")
+    print """
+        Connect to port 8089 for echo service
+        Connect to port 8887 to show statistic
+        Connect to port 8888 to terminate this server
+        """
 
 def getSocket():
     return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-size = 255
+size = 1024
+backlog = 10
 host = "0.0.0.0"
 port = 8089
-server = getSocket()
-server.bind((host, port))
-server.listen(10)
-inputList = [server, sys.stdin]
+statsPort = 8887
+shutdownPort = 8888
+echo = getSocket()
+stats = getSocket()
+shutdown = getSocket()
+echo.bind((host, port))
+echo.listen(backlog)
+stats.bind((host, port))
+stats.listen(backlog)
+shutdown.bind((host, port))
+shutdown.listen(backlog)
+inputList = [echo, stats, shutdown]
 clientList = []
 prompt()
 flag = True
 while flag:
     inputready, outputread, exceptready = select.select(inputList, [], [])
     for s in inputready:
-        if s == server:
+        if s == echo:
             c, addr = server.accept()
             print("Remote connection from " + addr[0] + " accepted.")
             inputList.append(c)
             clientList.append(c)
-        elif s == sys.stdin:
-            cmd = sys.stdin.readline().strip()
-            if cmd == "x":
-                flag = False
-            elif cmd == "s":
-                print("Clients connected: " + str(len(clientList)))
-                prompt()
-            else:
-                prompt()
+        elif s == stats:
+            statsClient, addr = server.accept()
+            statsClient.sendall("Clients connected: " + str(len(clientList)))
+            statsClient.close()
+        elif s == shutdown:
+            shutdownClient, addr = server.accept()
+            print("Shutting down server...")
+            flag = False
+            shutdownClient.close()
         else:
-            buf = s.recv(size)
+            buf = receive(s, size)
             if buf:
                 #print(buf) # Debug code
                 for client in clientList:
