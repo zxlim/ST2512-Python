@@ -11,11 +11,11 @@ def receive(client, size):
 
 def prompt():
     print """
-        Connect to port 8089 for broadcast
-        Conenct to port 8885 to kick user
-        Connect to port 8886 to whisper
-        Connect to port 8887 to show statistic
-        Connect to port 8888 to terminate this server
+        Connect to port 8887 for /stats
+        Connect to port 8089 for /broadcast
+        Connect to port 8885 for /whisper
+        Connect to port 8886 for /kick
+        Connect to port 8888 for /shutdown
         """
 
 def getSocket():
@@ -24,19 +24,36 @@ def getSocket():
 size = 1024
 backlog = 10
 host = "0.0.0.0"
-port = 8089
+
 statsPort = 8887
+echoPort = 8089
+whisperPort = 8885
+kickUserPort = 8886
 shutdownPort = 8888
-echo = getSocket()
+
 stats = getSocket()
+echo = getSocket()
+#whisper = getSocket()
+#kickUser = getSocket()
 shutdown = getSocket()
-echo.bind((host, port))
-echo.listen(backlog)
+
 stats.bind((host, statsPort))
 stats.listen(backlog)
+
+echo.bind((host, echoPort))
+echo.listen(backlog)
+
+#whisper.bind((host, whisperPort))
+#whisper.listen(backlog)
+
+#kickUser.bind((host, kickUserPort))
+#kickUser.listen(backlog)
+
 shutdown.bind((host, shutdownPort))
 shutdown.listen(backlog)
+
 inputList = [echo, stats, shutdown]
+#inputList = [echo, stats, shutdown]
 clientList = []
 prompt()
 flag = True
