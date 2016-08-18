@@ -55,7 +55,7 @@ def monitor(con):
     print "connection is closed"
     # calling quit() to stop the tkinter window (in case, it is still running)
     quit(None)
- 
+
 def quit(event):
     if clientsocket:
         # after the socket is closed. the monitor function will be receiving a
@@ -71,15 +71,15 @@ def sendmsg(event):
     contents = inputT.get(1.0, END).strip()
     #1.0 refer to 1st line, 0th col
     if contents:
-        try:     
+        try:
             clientsocket.sendall("["+nickName+"]:"+contents+'\n')
         except:
             quit(None)
-    # delete the current input from the textbox. (from 1st char to the end)        
+    # delete the current input from the textbox. (from 1st char to the end)
     inputT.delete(1.0,END)
 ##  #set cursor back to row 1, col 0
     inputT.see(1.0)
-    
+
 def inputKeyup(event):
     if len(event.char)<1: #ignore 'shift, crtl ... key release
         return
@@ -92,7 +92,7 @@ if len(sys.argv)<3:
     # program still proceeds, using the following two default settings.
     host = 'localhost'
     nickName = 'annoymous'
-else:     
+else:
     host = sys.argv[1]
     nickName= sys.argv[2]
 
@@ -104,7 +104,7 @@ except:
     sys.exit()
 # starting a separate thread to monitor and display incoming message from
 # chat server
-t = threading.Thread(target=monitor, args=(clientsocket,)) 
+t = threading.Thread(target=monitor, args=(clientsocket,))
 t.start()
 
 # The following is the gui programming part to create a
@@ -113,7 +113,7 @@ t.start()
 root = Tk()
 root.title("Chat Client v.0.1")
 
-# Display textbox (15 rows by 80 columns) 
+# Display textbox (15 rows by 80 columns)
 displayT = ScrolledText(root, height=15, width=80)
 displayT.insert(END, "")
 displayT.configure(state="disabled")
