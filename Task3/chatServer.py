@@ -19,19 +19,19 @@ def receive(client, size):
         buf = ""
     return buf
 
+## Returns the nickname of the client
 def getClientName(buf):
-    clientName = buf.replace("[","").split("]")[0]
-    return clientName
+    return (buf.replace("[","").split("]")[0])
 
 ## Displays a prompt when the server starts
 def prompt():
-    print("Server started at:\t" + str(startTime)[:19])
+    print("Server start time:\t" + str(startTime)[:19])
     print """
-Connect to port 8887 for /stats
-Connect to port 8089 for /broadcast
-Connect to port 8885 for /whisper
-Connect to port 8886 for /kick
-Connect to port 8888 for /shutdown
+    Connect to port 8887 for stats
+    Connect to port 8089 for broadcast
+    Connect to port 8885 for whisper
+    Connect to port 8886 for kick
+    Connect to port 8888 for shutdown
 
 Server Log:
         """
@@ -67,7 +67,7 @@ def getSocket():
     return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 size = 255
-backlog = 9
+backlog = 9 ## Server can only listen to max 9 connections per socket
 host = "0.0.0.0"
 
 echoPort = 8089
@@ -76,6 +76,7 @@ shutdownPort = 8888
 broadcastPort = 8884
 whisperPort = 8885
 kickUserPort = 8886
+serverLogPort = 8880
 
 echo = getSocket()
 stats = getSocket()
@@ -83,6 +84,7 @@ shutdown = getSocket()
 broadcast = getSocket()
 whisper = getSocket()
 kickUser = getSocket()
+serverLog = getSocket()
 
 echo.bind((host, echoPort))
 echo.listen(backlog)
@@ -102,11 +104,15 @@ whisper.listen(backlog)
 kickUser.bind((host, kickUserPort))
 kickUser.listen(backlog)
 
+serverLog.bind((host, serverLogPort))
+serverLog.listen(backlog)
+
 inputList = [echo, stats, shutdown, broadcast, whisper, kickUser]
-clientList = []
-clientStatsDict = {}
-clientDict = {}
-clientName = {}
+statMsgCount = 0 ## Stores the amount of messages sent while server is up
+clientList = [] ## Contains the sockets of all connected clients
+clientStatsDict = {} ## For storing the stats of each client
+clientDict = {} ## For storing the socket of the client with an ID as the key
+clientName = {} ## Contains the nicknames of each client
 flag = True
 startTime = currentDateTime()
 prompt()
@@ -127,8 +133,10 @@ while flag:
         elif s == stats:
             a, addr = stats.accept()
             upTime = currentDateTime() - startTime
-            adminStats = "Server has been up for " + str(upTime)[:10]\
-                         + "\nClients connected: " + getClientCount()\
+            adminStats = "Server start time:\t" + str(startTime)[:19]\
+                         + "\nServer has been up for " + str(upTime)[:10]\
+                         + "\nTotal messages sent: " + str(statMsgCount)\
+                         + "\n\nClients connected: " + getClientCount()\
                          + "\nName - IP Address (Client ID)\n" + getClientStats()
             a.sendall(adminStats)
             a.close()
@@ -157,9 +165,10 @@ while flag:
                 client = clientDict[int(clientID)]
                 client.sendall("Private Message from Admin: " + msg + "\n")
                 a.sendall("Private message sent successfully.\n")
-                print("An admin has whispered to " + clientName[client] + " (" + clientID + ")")
+                print("Admin has whispered to " + clientName[client] + " (ID: " + clientID + ")")
             except Exception as ex:
                 a.sendall("Server encountered an error:\n" + str(ex) + "\n")
+                print("Server encountered an error:\n" + str(ex))
                 pass
             a.close()
         elif s == kickUser:
@@ -172,22 +181,31 @@ while flag:
                 inputList.remove(client)
                 clientList.remove(client)
                 del clientStatsDict[client]
-                print(clientName[client] + " (" + str(buf) + ") kicked from server.")
-                a.sendall(clientName[client] + " (" + str(buf) + ") kicked from server.\n")
+                print(clientName[client] + " (ID: " + str(buf) + ") kicked from server.")
+                a.sendall(clientName[client] + " (ID: " + str(buf) + ") kicked from server.\n")
                 for c in clientList:
                     c.sendall(clientName[client] + " has been kicked from the chat.\n")
                     c.sendall(getClientCount() + " person(s) left.\n")
             except Exception as ex:
                 a.sendall("Server encountered an error:\n" + str(ex) + "\n")
+                print("Server encountered an error:\n" + str(ex))
                 pass
+            a.close()
+        elif s == serverLog:
+            a, addr = serverLog.accept()
+            try:
+                a.sendall(serverLogStr)
+            except Exception as ex:
+                print("Server encountered an error:\n" + str(ex))
+                a.sendall("Server encountered an error:\n" + str(ex) + "\n")
             a.close()
         else:
             buf = receive(s, size)
             if buf:
-                name = getClientName(buf)
-                clientName[s] = name
+                clientName[s] = getClientName(buf)
                 for client in clientList:
                     client.sendall(buf)
+                statMsgCount = statMsgCount + 1
             else:
                 try:
                     c = clientStatsDict[s]
@@ -200,7 +218,7 @@ while flag:
                     for client in clientList:
                         client.sendall(n + " left the chat.\n")
                         client.sendall(getClientCount() + " person(s) left.\n")
-                    print(n + " (" + str(c[0]) + ":" + str(c[1])\
+                    print(n + " (ID: " + str(c[0]) + ":" + str(c[1])\
                           +") disconnected from the server.")
                     print("Clients connected: " + getClientCount())
                 except Exception as ex:
@@ -210,4 +228,4 @@ for client in clientList:
     client.close()
 for sockets in inputList:
     sockets.close()
-print("Server connection closed.")
+print("\nServer shut down time:\t" + str(currentDateTime())[:19])
