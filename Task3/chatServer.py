@@ -19,6 +19,10 @@ def receive(client, size):
         buf = ""
     return buf
 
+def getClientName(buf):
+    clientName = buf.replace("[","").split("]")[0]
+    return clientName
+
 ## Displays a prompt when the server starts
 def prompt():
     print("Server started at:\t" + str(startTime)[:19])
@@ -44,8 +48,8 @@ def getClientStats():
     clientStats = ""
     for c in clientList:
         temp = clientStatsDict[c] + (clientID,)
-        clientStats = clientStats + str(temp[0]) + ":" + str(temp[1])\
-                      + "\t|\t" + str(temp[2]) + "\n"
+        clientStats = clientStats + str(clientName[c]) + " - "+ str(temp[0]) + ":" + str(temp[1])\
+                      + " (" + str(temp[2]) + ")\n"
         clientID = clientID + 1
     return clientStats
 
@@ -102,6 +106,7 @@ inputList = [echo, stats, shutdown, broadcast, whisper, kickUser]
 clientList = []
 clientStatsDict = {}
 clientDict = {}
+clientName = {}
 flag = True
 startTime = currentDateTime()
 prompt()
@@ -113,9 +118,9 @@ while flag:
             c, addr = echo.accept()
             for client in clientList:
                 client.sendall("Someone has joined the chat.\n")
-            inputList.append(c)
             clientList.append(c)
             clientStatsDict[c] = (addr[0], addr[1])
+            clientName[c] = "Anonymous"
             print(addr[0] + ":" + str(addr[1]) + " connected to the server.\n"\
                   + "Clients connected: " + getClientCount())
         elif s == stats:
@@ -123,7 +128,7 @@ while flag:
             upTime = currentDateTime() - startTime
             adminStats = "Server has been up for " + str(upTime)[:10]\
                          + "\nClients connected: " + getClientCount()\
-                         + "\nIP Address\t|\tClient ID\n" + getClientStats()
+                         + "\nName - IP Address (Client ID)\n" + getClientStats()
             a.sendall(adminStats)
             a.close()
         elif s == shutdown:
@@ -151,7 +156,7 @@ while flag:
                 client = clientDict[int(clientID)]
                 client.sendall("Private Message from Admin: " + msg + "\n")
                 a.sendall("Private message sent successfully.\n")
-                print("An admin has whispered to Client ID " + clientID)
+                print("An admin has whispered to " + clientName[client] + " (" + clientID + ")")
             except Exception as ex:
                 a.sendall("Server encountered an error:\n" + str(ex) + "\n")
                 pass
@@ -166,10 +171,10 @@ while flag:
                 inputList.remove(client)
                 clientList.remove(client)
                 del clientStatsDict[client]
-                print("Client ID " + str(buf) + " kicked from server.")
-                a.sendall("Client ID " + str(buf) + " kicked from server.\n")
+                print(clientName[client] + " (" + str(buf) + ") kicked from server.")
+                a.sendall(clientName[client] + " (" + str(buf) + ") kicked from server.\n")
                 for c in clientList:
-                    c.sendall("Someone has been kicked from the chat.\n")
+                    c.sendall(clientName[client] + " has been kicked from the chat.\n")
                     c.sendall(getClientCount() + " person(s) left.\n")
             except Exception as ex:
                 a.sendall("Server encountered an error:\n" + str(ex) + "\n")
@@ -178,24 +183,29 @@ while flag:
         else:
             buf = receive(s, size)
             if buf:
+                name = getClientName(buf)
+                clientName[s] = name
                 for client in clientList:
                     client.sendall(buf)
             else:
                 try:
                     c = clientStatsDict[s]
+                    n = clientName[s]
                     s.close()
-                    inputList.remove(s)
                     clientList.remove(s)
                     del clientStatsDict[s]
+                    del clientName[s]
                     for client in clientList:
-                        client.sendall("Someone left the chat.\n")
+                        client.sendall(n + " left the chat.\n")
                         client.sendall(getClientCount() + " person(s) left.\n")
-                    print(str(c[0]) + ":" + str(c[1])\
-                          +" disconnected from the server.")
+                    print(n + " (" + str(c[0]) + ":" + str(c[1])\
+                          +") disconnected from the server.")
                     print("Clients connected: " + getClientCount())
                 except Exception as ex:
                     print("Server encountered an error:\n" + str(ex))
                     pass
 for client in clientList:
     client.close()
+for sockets in inputList:
+    sockets.close()
 print("Server connection closed.")
