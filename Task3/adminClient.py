@@ -34,40 +34,59 @@ flag = True
 print("\nServer Host: " + host)
 
 while flag:
-    msg = raw_input("\nEnter your action (/help) for help: ")
-    action = msg.split()[0].replace("/","")
+    msg = raw_input("\nEnter your action (help) for help: ")
+    action = msg.split()[0]
     try:
         s = getSocket()
         if action == "help":
             print """
-/stats to retrieve connected clients information
-/broadcast [MESSAGE] to broadcast a message
-/whisper [CLIENT ID] [MESSAGE] to send a private message to a user
-/kick [CLIENT ID] to kick and disconnects a client
-/shutdownNOW to shutdown the server
-/quit to close admin client               
+stats to retrieve connected clients information
+broadcast [MESSAGE] to broadcast a message
+whisper [CLIENT ID] [MESSAGE] to send a private message to a user
+kick [CLIENT ID] to kick and disconnects a client
+shutdownNOW to shutdown the server
+quit to close admin client
                 """
         elif action == "stats" or action == "s":
             s.connect((host, statsPort))
             print(receive(s, size))
             s.close()
         elif action == "broadcast":
-            adminMsg = msg.replace("broadcast ","")
-            s.connect((host, broadcastPort))
-            s.sendall(adminMsg)
-            s.close()
+            msgFlag = True
+            line = msg.replace("broadcast","")
+            adminMsg = line.strip()
+            if len(adminMsg) <= 0:
+                print("Broadcast message is empty. Please type something.")
+                msgFlag = False
+            if msgFlag:
+                s.connect((host, broadcastPort))
+                s.sendall(adminMsg)
+                s.close()
         elif action == "whisper":
-            adminMsg = msg.replace("whisper ","")
-            s.connect((host, whisperPort))
-            s.sendall(adminMsg)
-            print(receive(s, size))
-            s.close()
+            msgFlag = True
+            line = msg.replace("whisper","")
+            adminMsg = line.strip()
+            if len(adminMsg) <= 0:
+                print("Whisper input is empty. Please enter a client ID.")
+                msgFlag = False
+            if msgFlag:
+                s.connect((host, whisperPort))
+                s.sendall(adminMsg)
+                print(receive(s, size))
+                s.close()
         elif action == "kick":
-            clientID = msg.replace("kick ","")
-            s.connect((host, kickUserPort))
-            s.sendall(clientID)
-            print(receive(s, size))
-            s.close()
+            msgFlag = True
+            line = msg.replace("kick","")
+            adminMsg = line.strip()
+            if len(adminMsg) <= 0:
+                print("Kick input is empty. Please enter a client ID")
+                msgFlag = False
+            if msgFlag:
+                clientID = msg.replace("kick ","")
+                s.connect((host, kickUserPort))
+                s.sendall(clientID)
+                print(receive(s, size))
+                s.close()
         elif action == "shutdownNOW":
             s.connect((host, shutdownPort))
             s.close()
