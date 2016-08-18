@@ -7,9 +7,11 @@ from select import select
 import socket
 from time import sleep
 
+## Returns the current date and time
 def currentDateTime():
     return datetime.now()
 
+## Safely receives data from socket connection by catching any exceptions
 def receive(client, size):
     try:
         buf = client.recv(size)
@@ -17,6 +19,7 @@ def receive(client, size):
         buf = ""
     return buf
 
+## Displays a prompt when the server starts
 def prompt():
     print("Server started at:\t" + str(startTime)[:19])
     print """
@@ -29,19 +32,25 @@ Connect to port 8888 for /shutdown
 Server Log:
         """
 
+## Returns the length of the clientList, which is the total number of
+## clients connected
 def getClientCount():
     return str(len(clientList))
 
+## Returns a string containing the IP address, port and a unique ID
+## of all connected clients
 def getClientStats():
     clientID = 1
     clientStats = ""
     for c in clientList:
         temp = clientStatsDict[c] + (clientID,)
         clientStats = clientStats + str(temp[0]) + ":" + str(temp[1])\
-                      + " (" + str(temp[2]) + ")\n"
+                      + "\t|\t" + str(temp[2]) + "\n"
         clientID = clientID + 1
     return clientStats
 
+## Assigns a unique ID based on the number of connected clients and the order
+## they connected to the server
 def setClientID():
     clientDict.clear()
     clientID = 1
@@ -49,6 +58,7 @@ def setClientID():
         clientDict[clientID] = c
         clientID = clientID + 1
 
+## Returns a socket
 def getSocket():
     return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -101,18 +111,19 @@ while flag:
     for s in inputready:
         if s == echo:
             c, addr = echo.accept()
-            print(addr[0] + ":" + str(addr[1]) + " connected to the server.")
             for client in clientList:
                 client.sendall("Someone has joined the chat.\n")
             inputList.append(c)
             clientList.append(c)
             clientStatsDict[c] = (addr[0], addr[1])
+            print(addr[0] + ":" + str(addr[1]) + " connected to the server.\n"\
+                  + "Clients connected: " + getClientCount())
         elif s == stats:
             a, addr = stats.accept()
             upTime = currentDateTime() - startTime
             adminStats = "Server has been up for " + str(upTime)[:10]\
                          + "\nClients connected: " + getClientCount()\
-                         + "\nIP Address:Port (Client ID)\n" + getClientStats()
+                         + "\nIP Address\t|\tClient ID\n" + getClientStats()
             a.sendall(adminStats)
             a.close()
         elif s == shutdown:
@@ -139,7 +150,8 @@ while flag:
             try:
                 client = clientDict[int(clientID)]
                 client.sendall("Private Message from Admin: " + msg + "\n")
-                a.sendall("Message sent successfully.\n")
+                a.sendall("Private message sent successfully.\n")
+                print("An admin has whispered to Client ID " + clientID)
             except Exception as ex:
                 a.sendall("Server encountered an error:\n" + str(ex) + "\n")
                 pass
