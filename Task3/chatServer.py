@@ -118,6 +118,7 @@ while flag:
             c, addr = echo.accept()
             for client in clientList:
                 client.sendall("Someone has joined the chat.\n")
+            inputList.append(c)
             clientList.append(c)
             clientStatsDict[c] = (addr[0], addr[1])
             clientName[c] = "Anonymous"
@@ -192,6 +193,7 @@ while flag:
                     c = clientStatsDict[s]
                     n = clientName[s]
                     s.close()
+                    inputList.remove(s)
                     clientList.remove(s)
                     del clientStatsDict[s]
                     del clientName[s]
